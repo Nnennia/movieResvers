@@ -38,7 +38,7 @@ const Movies = sequelize.define("Movies", {
 	},
 });
 
-const Booked = sequelize.define("Bookings", {
+const Booked = sequelize.define("Booked", {
 	id: {
 		type: DataTypes.INTEGER,
 		allowNull: false,
@@ -46,7 +46,7 @@ const Booked = sequelize.define("Bookings", {
 		autoIncrement: true,
 	},
 	name: {
-		type: DataTypes.STRINGS,
+		type: DataTypes.STRING,
 		allowNull: false,
 	},
 	MovieBooked: {

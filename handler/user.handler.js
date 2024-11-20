@@ -1,7 +1,8 @@
 const { Op } = require("sequelize");
-const sequelize = require("./config/db");
-const Movies = require("../models/cinemadb");
-const Booked = require("../models/cinemadb");
+const sequelize = require("../config/db");
+const { Movies, Booked } = require("../models/cinemadb");
+require("dotenv").config();
+
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const cinema = async (req, res) => {
@@ -9,10 +10,10 @@ const cinema = async (req, res) => {
 		const { action } = req.body;
 
 		if (action === "search") {
-			const { movie, genre, actors } = req.body;
+			const { movie, genre, actor } = req.body;
 
 			// Ensure at least one search parameter is provided
-			if (!movie && !genre && !actors) {
+			if (!movie && !genre && !actor) {
 				return res.status(400).json({ error: "Input at least one parameter" });
 			}
 
@@ -20,7 +21,7 @@ const cinema = async (req, res) => {
 			const whereClause = {};
 			if (movie) whereClause.Movie = { [Op.like]: `%${movie}%` };
 			if (genre) whereClause.Genre = { [Op.like]: `%${genre}%` };
-			if (actors) whereClause.Actor = { [Op.like]: `%${actors}%` };
+			if (actor) whereClause.Actor = { [Op.like]: `%${actor}%` };
 
 			// Fetch movies matching the criteria
 			const result = await Movies.findAll({ where: whereClause });
@@ -55,18 +56,31 @@ const cinema = async (req, res) => {
 			if (seatTaken) {
 				return res.status(400).json({ error: "Seat is already booked" });
 			}
+			try {
+				const paymentIntent = await stripe.paymentIntents.create({
+					amount: amount * 100,
+					currency: "usd",
+					payment_method: paymentMethodId,
+					confirm: true,
+				});
+				// Book the seat
+				const newBooking = await Booked.create({
+					Name: name,
+					MovieBooked: movie,
+					SeatNumber: SeatNumber,
+				});
 
-			// Book the seat
-			const newBooking = await Booked.create({
-				Name: name,
-				Movie: movie,
-				SeatNumber: SeatNumber,
-			});
-
-			return res.status(200).json({
-				message: "Booking successful",
-				booking: newBooking,
-			});
+				return res.status(200).json({
+					message: "Booking successful",
+					booking: newBooking,
+				});
+			} catch (paymentError) {
+				console.error("Payment failed:", paymentError);
+				return res.status(400).json({
+					error: "Payment failed. Please try again",
+					details: paymentError.message,
+				});
+			}
 		} else {
 			return res.status(400).json({ error: "Invalid action" });
 		}
@@ -76,4 +90,4 @@ const cinema = async (req, res) => {
 	}
 };
 
-module.exports = { cinema };
+module.exports = cinema;
