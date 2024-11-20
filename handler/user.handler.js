@@ -1,6 +1,7 @@
 const { Op } = require("sequelize");
 const sequelize = require("../config/db");
 const { Movies, Booked } = require("../models/cinemadb");
+const { options } = require("../routes/user.routes");
 require("dotenv").config();
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
@@ -32,7 +33,7 @@ const cinema = async (req, res) => {
 			}
 
 			return res.status(200).json({ movies: result });
-		} else if (action === "Book") {
+		} else if (action === "book") {
 			const { name, movie, SeatNumber } = req.body;
 
 			// Validate inputs
@@ -48,11 +49,17 @@ const cinema = async (req, res) => {
 			if (!selectedMovie) {
 				return res.status(404).json({ error: "Movie not found" });
 			}
+			console.log(selectedMovie);
 
 			// Check if the seat is already booked
-			const seatTaken = await Booked.findOne({
-				where: { Movie: movie, SeatNumber: SeatNumber },
-			});
+			const seatTaken = await Booked.findOne(
+				{
+					where: { MovieBooked: movie, SeatNumber: SeatNumber },
+				},
+				{
+					attributes: { exclude: ["createdAt", "updatedAt"] },
+				}
+			);
 			if (seatTaken) {
 				return res.status(400).json({ error: "Seat is already booked" });
 			}

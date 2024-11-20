@@ -6,6 +6,14 @@ const app = express();
 const userRouter = require("./routes/user.routes");
 
 const PORT = process.env.PORT;
+(async () => {
+	try {
+		await sequelize.sync({ alter: true }); // Alter the table to match the model
+		console.log("Database synchronized successfully.");
+	} catch (error) {
+		console.error("Error synchronizing database:", error);
+	}
+})();
 
 app.use(bodyParser.json());
 app.use((err, req, res, next) => {

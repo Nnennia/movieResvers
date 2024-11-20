@@ -38,24 +38,28 @@ const Movies = sequelize.define("Movies", {
 	},
 });
 
-const Booked = sequelize.define("Booked", {
-	id: {
-		type: DataTypes.INTEGER,
-		allowNull: false,
-		primaryKey: true,
-		autoIncrement: true,
+const Booked = sequelize.define(
+	"Booked",
+	{
+		id: {
+			type: DataTypes.INTEGER,
+			allowNull: false,
+			primaryKey: true,
+			autoIncrement: true,
+		},
+		name: {
+			type: DataTypes.STRING,
+			allowNull: false,
+		},
+		MovieBooked: {
+			type: DataTypes.STRING,
+			allowNull: false,
+		},
+		SeatNumber: {
+			type: DataTypes.INTEGER,
+			allowNull: false,
+		},
 	},
-	name: {
-		type: DataTypes.STRING,
-		allowNull: false,
-	},
-	MovieBooked: {
-		type: DataTypes.STRING,
-		allowNull: false,
-	},
-	SeatNumber: {
-		type: DataTypes.INTEGER,
-		allowNull: false,
-	},
-});
+	{ tableName: "Booked", timestamps: false }
+);
 module.exports = { Movies, Booked };
