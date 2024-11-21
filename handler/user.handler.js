@@ -1,7 +1,6 @@
 const { Op } = require("sequelize");
 const sequelize = require("../config/db");
 const { Movies, Booked } = require("../models/cinemadb");
-const { options } = require("../routes/user.routes");
 require("dotenv").config();
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
@@ -34,13 +33,12 @@ const cinema = async (req, res) => {
 
 			return res.status(200).json({ movies: result });
 		} else if (action === "book") {
-			const { name, movie, SeatNumber } = req.body;
+			const { name, movie, SeatNumber, paymentMethod } = req.body;
 
 			// Validate inputs
-			if (!name || !SeatNumber || !movie) {
+			if (!name || !SeatNumber || !movie || !paymentMethod) {
 				return res.status(400).json({
-					error:
-						"Input your name, seat number and movie you would like to book",
+					error: "Input your name, movie, seat number, and payment method.",
 				});
 			}
 
@@ -49,50 +47,68 @@ const cinema = async (req, res) => {
 			if (!selectedMovie) {
 				return res.status(404).json({ error: "Movie not found" });
 			}
-			console.log(selectedMovie);
 
 			// Check if the seat is already booked
-			const seatTaken = await Booked.findOne(
-				{
-					where: { MovieBooked: movie, SeatNumber: SeatNumber },
-				},
-				{
-					attributes: { exclude: ["createdAt", "updatedAt"] },
-				}
-			);
+			const seatTaken = await Booked.findOne({
+				where: { MovieBooked: movie, SeatNumber: SeatNumber },
+			});
+
 			if (seatTaken) {
 				return res.status(400).json({ error: "Seat is already booked" });
 			}
+
+			// Begin transaction for atomicity
+			const transaction = await sequelize.transaction();
 			try {
+				// Reserve the seat
+				const newBooking = await Booked.create(
+					{
+						name: name,
+						MovieBooked: movie,
+						SeatNumber: SeatNumber,
+						Status: "pending",
+					},
+					{ transaction }
+				);
+
+				// Process payment with Stripe
 				const paymentIntent = await stripe.paymentIntents.create({
-					amount: amount * 100,
+					amount: 50 * 100, // Amount in cents
 					currency: "usd",
-					payment_method: paymentMethodId,
+					payment_method: paymentMethod,
+					confirmation_method: "manual",
 					confirm: true,
+					return_url: "http://localhost:4000/cinema",
 				});
-				// Book the seat
-				const newBooking = await Booked.create({
-					Name: name,
-					MovieBooked: movie,
-					SeatNumber: SeatNumber,
-				});
+
+				// Confirm the booking if payment succeeds
+				await newBooking.update({ Status: "confirmed" }, { transaction });
+				await transaction.commit();
 
 				return res.status(200).json({
 					message: "Booking successful",
 					booking: newBooking,
 				});
 			} catch (paymentError) {
-				console.error("Payment failed:", paymentError);
-				return res.status(400).json({
-					error: "Payment failed. Please try again",
-					details: paymentError.message,
-				});
+				// Rollback the transaction if payment fails
+				await transaction.rollback();
+
+				if (paymentError.type === "StripeCardError") {
+					return res.status(400).json({ error: "Your card was declined." });
+				} else if (paymentError.type === "StripeInvalidRequestError") {
+					return res.status(400).json({ error: "Invalid payment details." });
+				} else {
+					console.error("Payment Error Details:", paymentError);
+					return res
+						.status(500)
+						.json({ error: "Payment processing failed. Try again." });
+				}
 			}
 		} else {
 			return res.status(400).json({ error: "Invalid action" });
 		}
 	} catch (error) {
-		console.error(error);
+		console.error("Unexpected error:", error);
 		return res.status(500).json({ error: "An unexpected error occurred" });
 	}
 };
