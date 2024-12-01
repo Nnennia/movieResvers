@@ -60,26 +60,26 @@ This repository provides an API for managing a movie cinema system. It supports 
 
 ## Endpoints
 
-1. Search Movies
+1.  Search Movies
 
-POST /cinema
+    POST /cinema
 
-Request body:
+    Request body:
 
-{
-"action": "search",
-"movie": "Movie Title",
-"genre": "Genre",
-"actor": "Actor Name"
-}
+    {
+    "action": "search",
+    "movie": "Movie Title",
+    "genre": "Genre",
+    "actor": "Actor Name"
+    }
 
-Response:
+    Response:
 
-    200 OK: Returns a list of matching movies.
-    400 Bad Request: Missing required search parameters.
-    404 Not Found: No movies found.
+        200 OK: Returns a list of matching movies.
+        400 Bad Request: Missing required search parameters.
+        404 Not Found: No movies found.
 
-2. Book Tickets
+2.  Book Tickets
 
 POST /cinema
 
