@@ -81,45 +81,49 @@ This repository provides an API for managing a movie cinema system. It supports 
 
 2.  Book Tickets
 
-POST /cinema
+    POST /cinema
 
-Request body:
+    Request body:
 
-{
-"action": "book",
-"name": "User Name",
-"movie": "Movie Title",
-"SeatNumber": 1,
-"paymentMethod": "<Stripe_Payment_Method_ID>"
-}
+    {
+    "action": "book",
+    "name": "User Name",
+    "movie": "Movie Title",
+    "SeatNumber": 1,
+    "paymentMethod": "<Stripe_Payment_Method_ID>"
+    }
 
-Response:
+    Response:
 
-    200 OK: Booking successful with booking details.
-    400 Bad Request: Missing or invalid input.
-    404 Not Found: Movie not found.
-    400 Bad Request: Seat already booked.
-    500 Internal Server Error: Payment or server error.
+        200 OK: Booking successful with booking details.
+        400 Bad Request: Missing or invalid input.
+        404 Not Found: Movie not found.
+        400 Bad Request: Seat already booked.
+        500 Internal Server Error: Payment or server error.
 
 ## Database Models
 
-Movies
+### Movies Table
 
-        Field	Type	Notes
-        id	Integer	Primary key, auto-increment
-        Movie	String	Movie title
-        Actor	String	Main actor
-        Genre	String	Genre
-        releaseDate	String	Release date
-        CinemaShowing	String	Cinema showing the movie
-        SeatsAvailable	String	Available seats
-        MovieDuration	String	Duration of the movie
-        Booked
-        Field	Type	Notes
-        id	Integer	Primary key, auto-increment
-        name	String	Name of the user
-        MovieBooked	String	Booked movie title
-        SeatNumber	Integer	Seat number
+| Field            | Type    | Notes                       |
+| ---------------- | ------- | --------------------------- |
+| `id`             | Integer | Primary key, auto-increment |
+| `Movie`          | String  | Movie title                 |
+| `Actor`          | String  | Main actor                  |
+| `Genre`          | String  | Genre                       |
+| `releaseDate`    | String  | Release date                |
+| `CinemaShowing`  | String  | Cinema showing the movie    |
+| `SeatsAvailable` | String  | Available seats             |
+| `MovieDuration`  | String  | Duration of the movie       |
+
+### Booked Table
+
+| Field         | Type    | Notes                       |
+| ------------- | ------- | --------------------------- |
+| `id`          | Integer | Primary key, auto-increment |
+| `name`        | String  | Name of the user            |
+| `MovieBooked` | String  | Booked movie title          |
+| `SeatNumber`  | Integer | Seat number                 |
 
 ## Technologies Used
 
